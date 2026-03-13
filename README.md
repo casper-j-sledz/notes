@@ -1,15 +1,15 @@
 > # [Angular](angular.md)
 
-> # Azure 
+> # Azure
 > ## App Certificates & Secrets
 >> * -> https://portal.azure.com/
 >> * -> App registrations
 >> * -> Select or create app
 >> * -> Manage -> Certificates & secrets
 > ## Azure - Pipe Config
->> * -> Home 
->> * -> App Services 
->> * -> [Select service] 
+>> * -> Home
+>> * -> App Services
+>> * -> [Select service]
 >> * -> Settings --> Configuration
 >> * -> FUNCTION_EXTENSION_VERSION [3 - for .NET Core 3 and higher]
 >> * -> FUNCTION_WORKER_RUNTIME [dotnet-isolated - for .NET 5 and higher]
@@ -28,7 +28,7 @@
 >> ```powershell
 >> Set-Location $env:UserProfile
 >> manage-bde -protectors -get c:
->> 
+>>
 >> # Volume C: [System]
 >> # All Key Protectors
 >> #     Numerical Password:
@@ -40,386 +40,10 @@
 >> #       PCR Validation Profile:
 >> #         7, 11
 >> #         (Uses Secure Boot for integrity validation)
->> 
+>>
 >> manage-bde -protectors -adbackup c: -id $ID_Numerical_Password
 
-> # C#, .Net
-> ## Code
->> ### Add Custom Headers to Http Response
->>> ```csharp
->>> private void AddHeaders(IHeaderDictionary headers, HttpResponseHeaders headersToAdd)
->>> {
->>>   var autoAddHeaders = new HashSet<string> { "Content-Type", "Date", "Server", "Transfer-Encoding" };
->>>
->>>   foreach (var h in headersToAdd)
->>>   {
->>>     if(!autoAddHeaders.Contains(h.Key))
->>>       headers.Append(h.Key, string.Join(",", h.Value!));
->>>   }
->>> }
->> ### Assert Log
->>> ```csharp
->>> // Assert
->>> this.loggerMock
->>>     .Verify(l => l.Log(
->>>         LogLevel.Error,
->>>         It.IsAny<EventId>(),
->>>         It.Is<It.IsAnyType>((@object, _) => @object.ToString()!.Contains("{...}")),
->>>         It.IsAny<Exception>(),
->>>         It.IsAny<Func<It.IsAnyType, Exception, string>>>()!));
->>> loggerMock.VerifyNoOtherCalls();
->> ### Attribute - Property
->>> ```csharp
->>> [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
->>> public class ExampleAttribute : Attribute { public string ExampleProperty { get; set; } }
->>> 
->>> public class ExampleClass
->>> {
->>>   public string PropertyOne { get; private set; }
->>> 
->>>   [ExampleAttribute]
->>>   public string PropertyTwo { get; private set; }
->>> 
->>>   [ExampleAttribute(ExampleProperty = "Test")]
->>>   public string PropertyThree { get; private set; }
->>> }
->> ### Attribute - Repeat Test
->>> ```csharp
->>> using Microsoft.VisualStudio.TestTools.UnitTesting;
->>> using System;
->>> using System.Collections.Generic;
->>> using System.Linq;
->>> using System.Reflection;
->>> 
->>> namespace NET_47.MsTest
->>> {
->>>     public sealed class RepeatAttribute : Attribute, ITestDataSource
->>>     {
->>>         private const int DEFAULT_REPEAT = 1;
->>>         private readonly int _count;
->>> 
->>>         public RepeatAttribute(int count = DEFAULT_REPEAT)
->>>             => _count = count > 0 ? count : DEFAULT_REPEAT;
->>> 
->>>         // Called before test
->>>         /// <inheritdoc/>
->>>         public IEnumerable<object[]> GetData(MethodInfo methodInfo)
->>>             => Enumerable.Range(1, _count).Select(x => new object[0]);
->>> 
->>>         // Called after test
->>>         /// <inheritdoc/>
->>>         public string GetDisplayName(MethodInfo methodInfo, object[] data)
->>>             => data != null
->>>                 ? $"{methodInfo.Name} x{_count}"
->>>                 : null;
->>>     }
->>> }
->> ### Disable / Open CORS
->>> ```csharp
->>> builder.Services.AddCors(options =>
->>> {
->>>   // Some applications like DataFlow-UI for local development requires enabling CORS:
->>>   options.AddDefaultPolicy(policy =>
->>>   {
->>>       policy.AllowAnyOrigin()
->>>             .AllowAnyMethod()
->>>             .AllowAnyHeader();
->>>   });
->>> });
->> ### Documenting Code
->>> #### Inheritdoc
->>>> ```csharp
->>>> ///<inheritdoc/>
->>>> ///<inheritdoc src="YourClass"/>
->>> ### Generic types
->>>> ```csharp
->>>> /// <returns>
->>>> ///    A <see cref="ActionResult{T}"/> containing a <see cref="List{T}"/> of <see cref="ExampleResponse"/>.
->>>> /// </returns>
->>>> public async Task<ActionResult<List<ExampleResponse>>> Get([FromQuery] ExampleQueryModel exampleQuery)
->>> #### Other
->>>> ```csharp
->>>> /// I<see cref="EgGeneric{T}"/>
->>>> /// <typeparam name="T">Type of delete service.</typeparam>
->>>> 
->>>> /// <summary>
->>>> /// Initializes a new instance of the <see cref="EgConstructor"/> class.
->>>> /// </summary>
->>>> 
->>>> /// <summary>
->>>> /// e.g. summary.
->>>> /// </summary>
->>>> /// <param name="egParameter"> e.g. parameter.</param>
->>>> /// <returns>e.g. result.</returns>
->> ### Enum to Array (Names)
->>> ```csharp
->>> Enum.GetNames<EnumType>();
->> ### ToDictionary()
->>> `(ICollection, IEnumerable).Cast<string>().ToDictionary(k => k, k => Session[k]);`
->> ### Generic + Interface
->>> ```csharp
->>> public class GenericClass<T> : IInterface where T : IGenericInterface
->> ### Getting request data - headers, cookies, etc.:
->>> `IHttpContextAccessor`
->> ### Handling partial success of parallel processing
->>> ```csharp
->>> var results = new ConcurrentBag<ExampleResults>();
->>> var errors  = new ConcurrentDictionary<string, Error>();
->>>
->>> await Parallel.ForEachAsync(ExampleList, cancellationToken, async (el, ct) => { [...] }
->>> ////////////////////////////////////////////////////////////////////////////////////////////////////
->>> protected ActionResult<T> PartialSuccessResult<T>(Result<T> result)
->>> {
->>>      if (!result.IsSuccess)
->>>          return StatusCode(result.Error.StatusCode, result.Error.Message);
->>>
->>>      if (result.Error != null)
->>>      {
->>>          Response.Headers.Append("Error-Code", result.Error.StatusCodes);
->>>          Response.Headers.Append("Error-Message", result.Error.Message);
->>>          return StatusCode(StatusCodes.Status207MultiStatus, result.Value);
->>>      }
->>>
->>>      return Ok(result.Value);
->>> }
->> ### Is xUnit Test
->>> ```csharp
->>> private static bool Is_xUnitTest()
->>> {
->>>     string testAssemblyName = "xunit";
->>>     return AppDomain.CurrentDomain.GetAssemblies().Any(a => a.FullName.StartsWith(testAssemblyName));
->>> }
->> ### HostEnvironmentExtensions
->>> ```csharp
->>> public static class HostEnvironmentExtensions
->>> {
->>>     private static string DB_POSTGRES_TYPE { get => "PostgreSQL"; }
->>> 
->>>     public static bool IsPostgres(this IHostEnvironment environment)
->>>     {
->>>         if (environment == null)
->>>             throw new ArgumentNullException(nameof(environment));
->>> 
->>>         return environment.EnvironmentName.Contains(DB_POSTGRES_TYPE, StringComparison.InvariantCultureIgnoreCase);
->>>     }
->>> }
->> ### ILike query (EF Core)
->>> ```csharp
->>> public async Task<List<ExampleEntity>>> GetAsync(ExampleQueryModel exampleQuery)
->>> {
->>>   var query = dbContext.ExampleEntity.AsQueryable();
->>>
->>>   // Exact search
->>>   if (!string.IsNullOrEmpty(exampleQuery.SearchDefaultValue))
->>>     query = query.Where(e => EF.Functions.ILike(e.FirstValue, $"{exampleQuery.SearchDefaultValue}"));
->>>
->>>   // Like search
->>>   if (!string.IsNullOrEmpty(exampleQuery.SearchValue))
->>>     query = query.Where(e => EF.Functions.ILike(e.SecondValue, $"%{exampleQuery.SearchValue}%"));
->>>
->>>   return await query.ToListAsync();
->>> }
->> ### Linq function
->>> ```csharp
->>> var r = healthReport.Entries.Aggregate(new int[3], (acc, keyValue) => acc);
->>> await httpContext.Response.WriteAsync($"_");
->>> ////////////////////////////////////////////////////////////////////////////////////////////////
->>> private static readonly Func<int[], KeyValuePair<string, HealthReportEntry>, int[]> AggregateStatuses = (accumulator, entry) =>
->>> {
->>>     accumulator[(int)entry.Value.Status]++;
->>>     return accumulator;
->>> };
->> ### Metrics - Counter & Histogram
->>> ```csharp
->>> var serviceName = "TestService";
->>> var serviceNamespace = "TestServiceNamespace";
->>> 
->>> var telemetryAttributes = new Dictionary<string, object>
->>> {
->>>     { "service.name", serviceName },
->>>     { "service.namespace", serviceNamespace },
->>>     { "service.instance.id", "X" },
->>>     { "service.version", "1.0.0.0" },
->>> };
->>> 
->>> var meterName = "TestMeter";
->>> var resourceBuilder = ResourceBuilder.CreateDefault().AddAttributes(telemetryAttributes);
->>> _meter = new Meter(meterName);
->>> _meterProvider = Sdk.CreateMeterProviderBuilder()
->>>     .SetResourceBuilder(resourceBuilder)
->>>     .AddMeter(meterName)
->>>     .AddAzureMonitorMetricExporter(o => o.ConnectionString = applicationInsightsConnection, null)
->>>     .Build();
->>> 
->>> ConcurrentDictionary<string, Counter<long>>  counters = new ();
->>> ConcurrentDictionary<string, Histogram<double>>  histograms = new ();
->>> 
->>> //IncrementCounter
->>> counters.GetOrAdd(counterName, _ => _meter.CreateCounter<long>(counterName))
->>>     .Add(1);
->>> 
->>> //RecordHistogram
->>> histograms.GetOrAdd(histogramName, _ => _meter.CreateHistogram<double>(histogramName))
->>>     .Record(value);
->> ### Named arguments
->>> ```csharp
->>> PrintOrderDetails(orderNum: 31, productName: "Red Mug", sellerName: "Gift Shop");
->>> PrintOrderDetails(productName: "Red Mug", sellerName: "Gift Shop", orderNum: 31);
->> ### Registry Edit
->>> * shell\open\command
->>> * Computer\HKEY_CLASSES_ROOT\.txt\ShellNew
->>> * ItemName
->>> * shell\open\command
->>>
->>> * `Microsoft.Win32.Registry.GetValue(String, String, Object)`
->>> * (Microsoft.Win32.Registry.dll) `Install-Package Microsoft.Win32.Registry -Version 5.0.0`
->> ### String Interpolation Formatting
->>> ```csharp
->>> $"{posBatch:D10}{posStan:D6}" //Digits formatting
->> ### String to bites (serialize)
->>> ```csharp
->>> Encoding.UTF8.GetBytes(@string)
->> ### Swagger default value
->>> ```csharp
->>> [ExcludeFromCodeCoverage]
->>> public class CustomersQueryModel
->>> {
->>>   /// <summary>
->>>   /// Search Default Value
->>>   /// </summary>
->>>   [DefaultValue("Example-Default-Value")]
->>>   public string? SearchDefaultValue { get; set; }
->>>
->>>   /// <summary>
->>>   /// Search Value
->>>   /// </summary>
->>>   public string? SearchValue { get; set; }
->>> }
->> ### Is Type (Type pattern matching)
->>> ```csharp
->>> if (@object is ExpectedType expectedTypeInstance) { ... }
->> ### Arrange, Act, Assert
->>> ```csharp
->>> // Arrange
->>> // Act
->>> // Assert
-> ## Remove bin & obj catalogs
->> `git clean -xdf --dry-run`
-> ## PreBuildEvent
->> ```xml
->> <PropertyGroup>
->>     <PreBuildEvent>powershell.exe {powershell commands}</PreBuildEvent>
->> </PropertyGroup>
-> ## [NuGet building](https://github.com/dotnet/sourcelink) (Assembly, .csproj)
->> ```xml
->> <PropertyGroup>
->>     [...]
->>     <OutputType>Library</OutputType>
->>     <IsPackable>true</IsPackable>
->>     <Authors>C. J. Sledz, {...}</Authors>
->>     <Company>{...}</Company>
->>     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
->>     <DebugType>embedded</DebugType>
->>     <Description>{...}</Description>
->>     <Deterministic>true</Deterministic>
->>     <EmbedUntrackedSources>true</EmbedUntrackedSources>
->>     <PackageLicenseExpression>UNLICENSED</PackageLicenseExpression>
->>     <PackageReadmeFile>README.md</PackageReadmeFile>
->>     <PublishRepositoryUrl>true</PublishRepositoryUrl>
->>     <Version>$(version)</Version>
->>   </PropertyGroup>
->> 
->>   <ItemGroup>
->>    {Repository type: https://github.com/dotnet/sourcelink}
->>   </ItemGroup>
->> ```
->> * Might be required to run `dotnet pack` in .csproj location:
->> * `dotnet add package Microsoft.SourceLink.AzureRepos.Git --version 1.1.1`
-> ## Errors
->> ### 'IServiceCollection' does not contain a definition for 'AddHealthChecks' 
->>> * **ERROR:**'IServiceCollection' does not contain a definition for 'AddHealthChecks' and no accessible extension method 'AddHealthChecks' accepting a first argument of type 'IServiceCollection' could be found (are you missing a using directive or an assembly reference?).
->>> * **Solution:** Install NuGet or add
->>>   * `<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="X.X.X" />`
->> ### Unable to start program 'func' (Azure Functions)
->>> * **ERROR:** Unable to start program 'func'
->>> * **Solution:** 
->>>   * a. Add Azure Functions(func.exe) to Environment Variables 
->>>     *  e.g. path: `%AppData%\..\Local\AzureFunctionsTools\Releases\3.37.0\cli_x64`
->>>   * b. Set path in project properties
->>>     * -> VS 
->>>     * -> Properties (Project)
->>>     * -> Debug 
->>>     * -> General 
->>>     * -> Open debag launch profiles UI 
->>>     * -> Executable 
->>>     * -> Set path to func.exe e.g. path `%AppData%\..\Local\AzureFunctionsTools\Releases\3.37.0\cli_x64`
-> ## [EditorConfig](https://editorconfig.org)
->> ```powershell
->> dotnet format
->> dotnet format --verify-no-changes -v diag
->> dotnet format whitespace --verify-no-changes -v diag
->> ```
->> ```ini
->> # Indentation and spacing
->> indent_size = 4
->> indent_style = space
->> tab_width = 4
->> trim_trailing_whitespace = true
->> 
->> # New line preferences
->> insert_final_newline = true
->> 
->> # Organize usings
->> dotnet_sort_system_directives_first = true
->> file_header_template = © Copyright {year} {company} All rights reserved.
->> 
->> # New line preferences
->> dotnet_style_allow_multiple_blank_lines_experimental = false
->> 
->> # Naming rules
->> dotnet_naming_rule.interface_should_be_begins_with_i.severity = error
->> dotnet_naming_rule.types_should_be_pascal_case.severity = error
->> dotnet_naming_rule.non_field_members_should_be_pascal_case.severity = warning
->> 
->> # Spelling rules
->> spelling_languages = en-gb
->> spelling_exclusion_path = exclusion.dic
->> spelling_checkable_types = strings,identifiers,comments
->> spelling_use_default_exclusion_dictionary = false
->> 
->> ######################## Code analyzer rules configuration ########################
->> # SA1101: Prefix local calls with this
->> dotnet_diagnostic.SA1101.severity = none
->> 
->> # SA1200: Using directives should be placed correctly
->> dotnet_diagnostic.SA1200.severity = none
->> 
->> # SA1309: Field names should not begin with underscore
->> dotnet_diagnostic.SA1309.severity = none
->> 
->> # SA1600: Elements should be documented
->> dotnet_diagnostic.SA1600.severity = none
-> ## [ReSharper CLI](https://www.jetbrains.com/help/resharper/ReSharper_Command_Line_Tools.html)
->> ### Installation
->>> ```powershell
->>> dotnet tool install -g JetBrains.ReSharper.GlobalTools
->> ### Running
->>> ```powershell
->>> $outputPath = "$($env:UserProfile)\Downloads\code-inspection.txt" && 
->>> jb InspectCode --build --format=Text -o="$($env:UserProfile)\Downloads\-code-inspection.txt" >> --severity=WARNING --verbosity=WARN --profile=".\Solution.sln.DotSettings" --no-swea Solution.sln 
->>> && Write-Output "$($outputPath):`n`t$(Type $outputPath)"
-> ## secret.json
->> * Secrets Directory: `%APPDATA%\Microsoft\UserSecrets\`
->> * .csproj
->> ````xml
->> <PropertyGroup>
->>   <UserSecretsId>$(MSBuildProjectName)</UserSecretsId>
->>   <GenerateAssemblyInfo>true</GenerateAssemblyInfo> 
->>   <!-- If GenerateAssemblyInfo == false add `[assembly: UserSecretsId("your_user_secrets_id")]` in `AssemblyInfo.cs` -->
->> </PropertyGroup>
-> ## [.NET - Support Policy](https://dotnet.microsoft.com/en-us/download/visual-studio-sdks?cid=getdotnetsdk)
-> ## [.NET Framework - Support Policy](https://learn.microsoft.com/en-us/lifecycle/products/microsoft-net-framework)
-> ## [.NET vs C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version)
+> # [C#, .Net](.net.md)
 
 > # Cloud
 >> * [Cloud Compare](https://comparecloud.in/#.WykVEQU53Og.linkedin)
@@ -448,7 +72,7 @@
 >>>			"script": "npx protractor relative-path/to/protractor.conf.js"
 >>>		}
 >>>	}
-> ### PowerShell:	
+> ### PowerShell:
 >>> * `npm install -g protractor`
 >>> * `npm protractor --version`
 
@@ -512,14 +136,14 @@
 > ### ERROR: Cannot connect to Podman. Please verify your connection to the Linux
 >>> * **ERROR:** Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
 Error: unable to connect to Podman. failed to create sshClient: connection to bastion host (ssh://user@localhost:50754/run/user/1000/podman/podman.sock) failed: dial tcp [::1]:50754: connectex: No connection could be made because the target machine actively refused it.
->>> * **Solution:** 
+>>> * **Solution:**
 >>> ```powershell
 >>> podman machine stop
 >>> podman machine rm -f
 >>> podman machine init --now
 > ### ERROR: Error response from daemon: i/o timeout
 >>> * **ERROR:** Image chainGuard/minio:latest Interrupt 123.1s Error response from daemon: i/o timeout.
->>> * **Solution:** 
+>>> * **Solution:**
 >>> ``` VPN connection might block connection / check internet
 
 > # Edge
@@ -528,7 +152,7 @@ Error: unable to connect to Podman. failed to create sshClient: connection to ba
 >>> * -> Settings
 >>> * -> Profiles
 >>> * -> Import browser data
->> ## 
+>> ##
 >>> * -> Privacy, search, and services
 >>>   * -> Services
 >>>     * -> Save time and money with Shopping in Microsoft Edge -> OFF
@@ -536,7 +160,7 @@ Error: unable to connect to Podman. failed to create sshClient: connection to ba
 >>>     * -> Address bar and search
 >>>       * -> Search engine used in the address bar -> Select or add one
 >>>       * -> Search on new tabs uses search box or address bar -> Address bar
->> ## 
+>> ##
 >>> * -> Appearance
 >>>   * -> Customize toolbar
 >>>     * -> Show tab actions menu -> OFF
@@ -545,23 +169,23 @@ Error: unable to connect to Podman. failed to create sshClient: connection to ba
 >>>     * -> Show favorites bar -> ALWAYS
 >>>     * -> Favorites button -> OFF
 >>>     * -> Collections button -> OFF
->> ## 
+>> ##
 >>> * -> Sidebar
 >>>   * -> Customize sidebar
 >>>     * -> Always show sidebar -> OFF
 >>>   * -> App and notification settings
 >>>     * -> Discover -> OFF
->> ## 
+>> ##
 >>> * -> Start, home, and new tabs
 >>>   * -> When Edge starts -> Open tabs from the previous session
 >>>   * -> Home button -> https://www.google.pl/
->>>   * -> New tab page 
+>>>   * -> New tab page
 >>>     * -> Layout  -> Focused / Custom
 >>>     * -> Language -> UK (English)
 >>>     * -> Quick links -> OFF
 >>>     * -> Background -> Edit -> OFF
 >>>     * -> Show greeting -> OFF
->>>     * -> Content -> OFF 
+>>>     * -> Content -> OFF
 >> ## Import Favorites (Bookmarks)
 >>> * -> Favorites Bar
 >>>   * -> Import favorites
@@ -619,13 +243,13 @@ Excel Function - Distinct Values
 >>> =LEWY(B1; ZNAJDŹ(","; B1)-1)
 >>> =FRAGMENT.TEKSTU(A1;4;3) & LEWY(A1; 2) & FRAGMENT.TEKSTU(A1; 6; 9)
 >>> =INDIRECT("'Inc Statistic'!" & ADDRESS((MATCH(E2;Table6[ID für Ticket];0)+1); 5))
->>> WorkingSheet.Cells(CurrentRow, MyColumn).Value = 
+>>> WorkingSheet.Cells(CurrentRow, MyColumn).Value =
 >>> (ClientName & " " & "(" & ClientLocation & ")" & " " & ExtraDefinition)
 >>> =INDIRECT("'Inc Statistic'!" & ADDRESS((MATCH(LEFT(D2;FIND("]";D2;9));Table6[[ Ticket Code]];0)+1); 5))
 >>> =A1&","&B1&","&+C1&","""&D1&""","""&E1&""","&F1&","&G1&","&H1&","&I1&","&J1&","&K1
->>> WorkingSheet.Range("B3").Value = 
+>>> WorkingSheet.Range("B3").Value =
 >>> (ClientName & " " & "(" & ClientLocation & ")" & " " & ExtraDefinition)
->>> 
+>>>
 >>> =ADDRESS(1,COLUMN())
 >>> =FIND("$", C39) + 1
 >>> =FIND("$", C39, C40)
@@ -635,10 +259,10 @@ Excel Function - Distinct Values
 >> ### VBA_s1
 >>> ```vb
 >>> Imports System
->>> 
+>>>
 >>> Module Program
 >>> table auto expansion
->>> 
+>>>
 >>>     Private Function TextToCol(text As String, separator as String, stringMark as String) As String()
 >>>         Dim splittedText = text.Split(separator)
 >>>         Dim listOfValues As New List(Of String)
@@ -657,46 +281,46 @@ Excel Function - Distinct Values
 >>>                     Loop
 >>>                     listOfValues.Add(stringBuilder.ToString().Replace(stringMark, ""))
 >>>                     stringBuilder.Clear()
->>>                 Else 
+>>>                 Else
 >>>                     listOfValues.Add(splittedText(i))
 >>>                 End If
->>>             Else 
+>>>             Else
 >>>                 listOfValues.Add(splittedText(i))
 >>>             End If
 >>>         Next
 >>>         return listOfValues.ToArray()
 >>>     End Function
->>>     
+>>>
 >>>     Private Sub DateCorrection(values As String(), toRemove as String, fromIndexes As integer())
 >>>         For Each item As integer In fromIndexes
 >>>             values(item) = values(item).Replace(toRemove, "")
 >>>         Next
 >>>     End Sub
->>>     
+>>>
 >>>     Sub Main(args As String())
 >>>         Const text = "0047642283,Closed,3,[10][P][BeBu] -Neue E4,""Doe, John"",""03.04.2019, 07:51:52"",,""13.11.2019, 06:18:44"",""05.06.2019, 11:08:34"",4627524,224.0"
 >>>         'todo covert text to right cell
->>>         Const separator = "," 
+>>>         Const separator = ","
 >>>         Const stringMark = """"
 >>>         Const dateCorrectionToRemove = ","
 >>>         Dim dates = {5, 7, 8}
->>>         
+>>>
 >>>         Dim values = TextToCol(text, separator, stringMark)
 >>>         DateCorrection(values, dateCorrectionToRemove, dates)
->>>         
+>>>
 >>>         'todo values types conversion
 >>>         'todo saving to appropriate cells
 >>>         'todo separated sheets for request and incidents
 >>>         'todo pivot auto refresh
 >>>         'todo months table
 >>>         'todo auto loaded months chart
->>>         
+>>>
 >>>         Console.WriteLine(text)
 >>>         For Each item In values
 >>>             Console.Write(item & "|")
 >>>         Next
 >>>         Console.WriteLine()
->>>         
+>>>
 >>>     End Sub
 >>> End Module
 >> ### VBA_s2
@@ -707,12 +331,12 @@ Excel Function - Distinct Values
 >>> 'todo auto set appropriate month in pivot and chart title
 >>> 'todo remove greater i_* in appropriate sheet
 >>> 'todo last two charts
->>> 
+>>>
 >>> 'Set sheet_req = Sheets("Req Report")
 >>> 'MsgBox VarType(Sheets("Inc Report"))
 >>> 'Dim cols_base() As Variant
 >>> 'cols_dest = Array(1, 2, 3, 6, 7, 10, 11, 12, 15, 16, 17)
->>> 
+>>>
 >>> Sub ExtractData()
 >>>     Dim i As Integer
 >>>     i = 1
@@ -723,7 +347,7 @@ Excel Function - Distinct Values
 >>>     MsgBox "A" & i
 >>>     DataFormatting (i)
 >>> End Sub
->>> 
+>>>
 >>> Sub DataFormatting(ByVal records As Integer)
 >>>     IntegerFormatting 4
 >>>     IntegerFormatting 11
@@ -732,28 +356,28 @@ Excel Function - Distinct Values
 >>>     DateFormatting 10
 >>>     FloatFormatting 12, "0.0"
 >>> End Sub
->>> 
+>>>
 >>> Sub FloatFormatting(ByVal col As Integer, formatting As String)
 >>>     lastRowIndex = Cells(Rows.Count, col).End(xlUp).row
 >>>     Set c = Range(Cells(1, col), Cells(lastRowIndex, col))
 >>>     c.NumberFormat = formatting
 >>>     c.FormulaLocal = c.Value
 >>> End Sub
->>> 
+>>>
 >>> Sub DateFormatting(ByVal col As Integer)
 >>>     lastRowIndex = Cells(Rows.Count, col).End(xlUp).row
 >>>     Set c = Range(Cells(1, col), Cells(lastRowIndex, col))
 >>>     c.NumberFormat = "dd.mm.yyyy hh:mm"
 >>>     c.FormulaLocal = c.Value
 >>> End Sub
->>> 
+>>>
 >>> Sub IntegerFormatting(ByVal col As Integer)
 >>>     lastRowIndex = Cells(Rows.Count, col).End(xlUp).row
 >>>     Set c = Range(Cells(1, col), Cells(lastRowIndex, col))
 >>>     c.NumberFormat = ""
 >>>     c.FormulaLocal = c.Value
 >>> End Sub
->>> 
+>>>
 >>> Sub test(ByVal row As Integer, Optional separator As String = ",", Optional stringMark As String = """")
 >>>     Dim splittedText() As String
 >>>     splittedText = Split(Cells(row, "A").Value, separator)
@@ -775,37 +399,37 @@ Excel Function - Distinct Values
 >>>         column = column + 1
 >>>     Next i
 >>> End Sub
->>> 
+>>>
 >>> Public Function ArrayLen(arr As Variant) As Integer
 >>>     ArrayLen = UBound(arr) - LBound(arr) + 1
 >>> End Function
->>> 
->>> 
+>>>
+>>>
 >>> 'TotalTicketsPerYearAppNameServeArea
 >>> Sub pivotTest()
->>> 
+>>>
 >>>     Dim pivotTableName As String
 >>>     Dim fieldName As String
 >>>     pivotTableName = "TotalTicketsPerYearAppNameServeArea"
 >>>     fieldName = "Total Tickets Per Year"
->>>     
+>>>
 >>>     RefreshPivotTable pivotTableName
 >>>     ClearFilterPivotTable pivotTableName, fieldName
->>>     
+>>>
 >>>     'MsgBox VarType(pt)
 >>>     'FilterPivotTable pivotTableName, fieldName
 >>> End Sub
->>> 
+>>>
 >>> Sub ClearFilterPivotTable(ByVal pivotTableName As String, fieldName As String)
 >>>     PivotTables(pivotTableName).PivotFields(fieldName).ClearAllFilters
 >>> End Sub
->>> 
+>>>
 >>> Sub RefreshPivotTable(ByVal pivotTableName)
 >>>         PivotTables(pivotTableName).PivotFields(fieldName).RefreshTable
 >>> End Sub
->>> 
+>>>
 >>> Sub FilterPivotTable(ByVal pivotTableName As String, fieldName As String)
->>>     
+>>>
 >>>     PivotTables(pivotTableName).PivotFields(fieldName).CurrentPage = _
 >>>       "0"
 >>>     'ActiveSheet.PivotTables("PivotTable2").ManualUpdate = False
@@ -833,394 +457,6 @@ Excel Function - Distinct Values
 >> * [VBA Strings & Characters - Built-in Constants](https://bettersolutions.com/vba/strings-characters/builtin-constants.htm)
 >> * [VBA to Create a PIVOT TABLE in Excel - READY to use MACRO Code](https://excelchamps.com/blog/vba-to-create-pivot-table/)
 
-> # Git & GitHub
-> ## Git SSH Key
->> * -> Git GUI -> Help Show SSH key -> Generate Key -> Copy to clipboard
->> * -> GitLab -> User -> Preferences -> SSH Keys -> Add new key 
->>   * Usage type: Authentication & Signing
->>   * Expiration date: null
-> ## Pull changes with temp stash
->> `git stash save "TEMP_$(Get-Date -Format "yyyy-MM-dd_HH:mm")"; git pull; git stash apply`
-> ## Add Submodule
->> `git submodule add [repositoryURL]`
-> ## Checkout / crate branch
->> `git checkout -b us/0000000000`
-> ## Crate commit
->> `git commit -m "Commit Name"`
-> ## Push to new branch
->> `git push --set-upstream origin (git branch --show-current);`
-> ## (GitHub) Go to create new PR (Pull Request) page
->> `start "$((git remote get-url origin).Replace('.git', ''))/pull/new/$(git branch --show-current)"`
-> ## (GitHub) Go to PR (Pull Request) page
->> `start "$((git remote get-url origin).Replace('.git', ''))/pulls"`
-> ## Branches naming
->> * `bug/AB#[ID] [Title]`
->> * `merge-release-[V.er.si.on]-to-develop`
->> * `spike/AB#[ID] [Title]`
->> * `story/AB#[ID] [Title]`
->> * `task/AB#[ID] [Title]`
->> * `technical/AB#[ID] [Title]`
-> ## Add all new files and tracked changes
->> * `git add .`
-> ## Change branch
->> * `git checkout [branchName]`
-> ## Change commit date
->> ### CommitDate / AuthorDate / GIT_COMMITTER_DATE
->>> * `git commit --amend --date "Mon Mar 1 01:00:00 2020 +0000" --no-edit` 
->> ### Check commit history:
->>> * `git log --pretty=fuller`
-> ## Change git editor
->> * `git config --global core.editor {editorName/editorPath}`
->> * `git config --global core.editor     "'C:\Program Files\Microsoft VS Code\Code.exe' -n -w"`
->> * `git config --global sequence.editor "'C:\Program Files\Microsoft VS Code\Code.exe' -n -w"`
->> * `-c "core.editor=code --wait --reuse-window" -c "sequence.editor=code --wait --reuse-window"`
-> ## Check commits history
->> * `git log`
-> ## Check git version
->> * `git --version`
-> ## Remove untracked files
->> * `git clean -xdf --dry-run`
->> * `-x` -> Remove files that are ignored by .gitignore.
->> * `-d` -> Remove untracked directories.
->> * `-f` -> Force removal.
->> * `--dry-run` -> Lists files to delete.
-> ## Clear not existing remote references
->> * `git fetch --prune` \ `git fetch -p`
-> ## Clone repository
->> * `git clone [httpsAdders / sshAdders]`
-> ## Config List
->> * `git config -l`
->> * `git config --global -l`
-> ## Config User Name & eMail 
->> * `git config user.name  "Casper J. Sledz"`
->> * `git config user.email "casper.j.sledz@gmail.com"`
->> * `config --global` for global config
-> ## Connect Origin Repository
->> * `git remote add origin [urlOfNewRepository]`
-> ## Connect Origin Branch
->> * `git branch --set-upstream-to=origin/[branchName]`
-> ## Create local branch and switch to it
->> * `git checkout -b [newLocalBranchName]`
-> ## Create new commit
->> * `git commit -m [commitName]`
-> ## Commands list
->> * `git --help`
-> ## Check if repository exist (current folder)
->> * `git status`
-> ## Create new local repository
->> * `git init`
-> ## Delete branch
->> * `git branch --delete [brachName]` 
->> * `-d` => `--delete`
->> * `-D` => `--delete --force`
-> ## Delete origin branch
->> * `git push origin --delete origin [originBrachName]` 
-> ## Disable SSL verify (globally) ERR: SSL certificate problem: self signed certificate
->> * `git config --global http.sslVerify [false / true]` 
-> ## Discard everything permanently
->> * `git reset --hard`
-> ## Discard file to HEAD
->> * `git reset HEAD [fileName]` 
-> ## Discard last commit - return to edition
->> * `git reset --soft HEAD~1`
-> ## Discard last tracked (added / staged) changes
->> * `git reset HEAD` 
-> ## Disconnect Origin
->> * `git remote rm origin` 
-> ## Files size (git bash)
->> * `git ls-tree -r --long HEAD | sort -k 4 -n -r` 
-> ## Get origin url
->> * `git remote get-url origin`
-> ## Ignore file / untrack
->> * `git update-index --assume-unchanged [FileName]`
-> ## Ignore file / untrack (revert)
->> * `git update-index --no-assume-unchanged [FileName]`
-> ## LFS (Large File Storage)
->> 1. Download and install [LFS](https://git-lfs.com/)
->> 2. `git lfs install`
->> 3. `git lfs track "example\path\to\e.g.\large.dll"`
-> ## Moving repository
->> 1. 
->>> 1. `git fetch -p`
->>> 2. `git fetch --tags`
->>> 3. `git remote rm origin`
->>> 4. `git remote add origin [urlOfNewRepository]`
->>> 5. `git push --set-upstream origin [originBranchName] --force` -> (for each branch to migrate )
->>> 6. `git push --tags` 
->> 2. 
->>> 1. -> Create temp directory
->>> 2. -> Open terminal in created director
->>> 3. -> Clone repository to move
->>> 	`git clone {urlOfOldRepository}`
->>> 4. -> May require go catalogue up to cloned repo
->>> 5. -> Check out to all beaches which you would like to move 
->>> 	`git checkout {branch-name}`
->>> 6. -> Fetch tags 
->>> 	`git fetch --tags`
->>> 7. -> you can verify beaches and tags
->>> 	`git tag`
->>> 	`git branch -a`
->>> 8. -> Disconnect old repo
->>> 	`git remote rm origin`
->>> 9. -> Connect with new repo
->>> 	`git remote add origin {urlOfNewRepository}`
->>> 10. -> Push main branch
->>> 11. -> Push rest of branches
->>> 	`git push origin --all`
-> ## Open online method documentation
->> * `git help [commandName]`
-> ## Override local changes
->> * `git reset --hard origin/development`
-> ## Push to new origin branch
->> * `git push --set-upstream origin [newOnlineBranchName]`
-> ## Push to repository (existing one)
->> * `git push -u origin [branchName]`
-> ## Rebase commits
->> * `git rebase -i HEAD~[numOfLastCommits]`
-> ## Remove files from the working tree
->> * `git rm -r [config/example-configuration]`
-c-r` -> Allow recursive removal when a leading directory name is given
-> ## Remove files (Large)
->> 1. -> [Install JDK](https://adoptium.net/)
->> 2. -> [Download bfg.jar](https://rtyley.github.io/bfg-repo-cleaner/)
->> 3. -> Remove file bigger than:
->>    1. `java -jar "$env:UserProfile\Downloads\bfg-1.14.0.jar" --strip-blobs-bigger-than 100M`
->>    1. `git reflog expire --expire=now --all`
->>    1. `git gc --prune=now --aggressive`
->> 4.  Change brach and repeat (CURRENT BRACH CANNOT BE EDITED)
->> 3. -> Remove specifics file:
->>    1. `java -jar bfg-1.14.0.jar --delete-files oraociei12.dll`
->>    1. `git reflog expire --expire=now --all`
->>    1. `git gc --prune=now --aggressive`
-> ## Remove git repository
->> * `Remove-Item -Force -Recurse –path ./.git`
-> ## Rename commit
->> * `git commit --amend -m [newCommitName]`
-> ## Rename merge
->> * `git commit --amend` -> Renames merge if it's last commit
-> ## Reverting single file
->> * `git checkout [commitID] --[filePath]`
->> * `git checkout 933cd760 --"\App\src\API\Example.cs"`
-> ## Save changes as temp (stash)
->> * `git stash`
-> ## Unstage and remove from index
->> * `git rm --cached [example.cs]`
->> * `rm --cached` 
->>   * Use this option to unstage and remove paths only from the index. 
->>   * Working tree files, whether modified or not, will be left alone.
-> ## GitHub Actions
->> ### YML Environment Values References
->>> #### Environment secrets
->>>> `secrets.{{ name }}`
->>> #### Environment variables
->>>> `vars.{{ name }}`
->>> #### Print values
->>>> ```yaml
->>>> - name: "Echo"`
->>>>   run: echo "{{ value }}"`
-> ## SSH Config
->> ```powershell
->> ssh-keygen -t ed25519 -C "[userEmail]"
->> ssh-keygen -t ECDSA   -C "[userEmail]"
->>  
->> ssh -i [userDirectory]/.ssh/id_ecdsa [userEmail]
->> ssh [userEmail] mkdir -p .ssh
->>
->> # ssh-rsa
->> #	-go to-> GitLab
->> #	-go to-> User Settings
->> #	-go to-> SSH Keys
->> # 	-copy key-> [userDirectory]/.ssh/id_rsa.pub
->> #	-> pase and add key
->> 
->> git config --global credential.helper WinCred
-> ## GitHub Branching Rules
->> ```json
->> {
->>   "id": 1,
->>   "name": "Secure release branches against deletions and updates",
->>   "target": "branch",
->>   "source_type": "Repository",
->>   "source": "github",
->>   "enforcement": "active",
->>   "conditions": {
->>     "ref_name": {
->>       "exclude": [],
->>       "include": [
->>         "refs/heads/Release_Branches/1.0.0.0"
->>       ]
->>     }
->>   },
->>   "rules": [
->>     {
->>       "type": "deletion"
->>     },
->>     {
->>       "type": "non_fast_forward"
->>     },
->>     {
->>       "type": "update"
->>     }
->>   ],
->>   "bypass_actors": []
->> }
->> /////////////////////////////////////////////////////////////////////////////////////////////////
->> {
->>   "id": 2,
->>   "name": "Secure core branches against edition expect TeamId=101",
->>   "target": "branch",
->>   "source_type": "Repository",
->>   "source": "github",
->>   "enforcement": "active",
->>   "conditions": {
->>     "ref_name": {
->>       "exclude": [],
->>       "include": [
->>         "~ALL"
->>       ]
->>     }
->>   },
->>   "rules": [
->>     {
->>       "type": "update"
->>     },
->>     {
->>       "type": "creation"
->>     }
->>   ],
->>   "bypass_actors": [
->>     {
->>       "actor_id": 101,
->>       "actor_type": "Team",
->>       "bypass_mode": "always"
->>     }
->>   ]
->> }
->> /////////////////////////////////////////////////////////////////////////////////////////////////
->> {
->>   "id": 3,
->>   "name": "Secure core branches against deletions",
->>   "target": "branch",
->>   "source_type": "Repository",
->>   "source": "github",
->>   "enforcement": "active",
->>   "conditions": {
->>     "ref_name": {
->>       "exclude": [],
->>       "include": [
->>         "~DEFAULT_BRANCH",
->>         "refs/heads/test"
->>       ]
->>     }
->>   },
->>   "rules": [
->>     {
->>       "type": "deletion"
->>     },
->>     {
->>       "type": "non_fast_forward"
->>     }
->>   ],
->>   "bypass_actors": []
->> }
->> /////////////////////////////////////////////////////////////////////////////////////////////////
->> {
->>   "id": 4,
->>   "name": "Pull request requirements - Test branch",
->>   "target": "branch",
->>   "source_type": "Repository",
->>   "source": "github",
->>   "enforcement": "active",
->>   "conditions": {
->>     "ref_name": {
->>       "exclude": [],
->>       "include": [
->>         "refs/heads/test"
->>       ]
->>     }
->>   },
->>   "rules": [
->>     {
->>       "type": "pull_request",
->>       "parameters": {
->>         "required_approving_review_count": 0,
->>         "dismiss_stale_reviews_on_push": false,
->>         "require_code_owner_review": false,
->>         "require_last_push_approval": false,
->>         "required_review_thread_resolution": false
->>       }
->>     },
->>     {
->>       "type": "required_deployments",
->>       "parameters": {
->>         "required_deployment_environments": [
->>           "development"
->>         ]
->>       }
->>     }
->>   ],
->>   "bypass_actors": []
->> }
->> /////////////////////////////////////////////////////////////////////////////////////////////////
->> {
->>   "id": 5,
->>   "name": "Pull request requirements - Development branch",
->>   "target": "branch",
->>   "source_type": "Repository",
->>   "source": "github",
->>   "enforcement": "active",
->>   "conditions": {
->>     "ref_name": {
->>       "exclude": [],
->>       "include": [
->>         "~DEFAULT_BRANCH"
->>       ]
->>     }
->>   },
->>   "rules": [
->>     {
->>       "type": "pull_request",
->>       "parameters": {
->>         "required_approving_review_count": 1,
->>         "dismiss_stale_reviews_on_push": true,
->>         "require_code_owner_review": false,
->>         "require_last_push_approval": true,
->>         "required_review_thread_resolution": true
->>       }
->>     },
->>     {
->>       "type": "required_linear_history"
->>     }
->>   ],
->>   "bypass_actors": []
->> }
->> /////////////////////////////////////////////////////////////////////////////////////////////////
->> // TODO
->> //  Working Branches Naming Rule
->> //    Working_Branches[/]TeamPrefix-[0-9]{5}_?.*
->> //      Working_Branches/TeamPrefix-18742
->> 
->> // Release Branches Naming Rule
->> //    ^((?!(Release_Branches\/TeamPrefix_[0-9]{1,2}([.][0-9]{1,2}){3})|(Working_Branches\/TeamPrefix-[0-9]{5}_?.*))).*$
->> //      Release_Branches/TeamPrefix_2.4.1.0
->> //      Release_Branches/TeamPrefix_2.3.21.0
->> //      Release_Branches/TeamPrefix_2.3.20.0
->> //      Release_Branches/TeamPrefix_2.4.1.0
->> //      Release_Branches/TeamPrefix_2.3.16.0
->> //      Release_Branches/TeamPrefix_2.3.18.0
->> 
->> //      Working_Branches/TeamPrefix-19903_sample_pipeline
->> //      Working_Branches/TeamPrefix-20300_only_ods
->> //      Working_Branches/TeamPrefix-20302_update_date
->> //      Working_Branches/TeamPrefix-00000
->> 
->> //      Working_Branches/TeamPrefix_20300
->> //      Working_Branches/update_date
->> 
->> //      Release_Branches/TeamPrefix_2.4.1
->> 
->> //      Test_Branches/Test
-
 > # GCP
 > ## Authenticate to Artifact Registry
 >> `gcloud auth configure-docker europe-west1-docker.pkg.dev`
@@ -1234,6 +470,8 @@ c-r` -> Allow recursive removal when a leading directory name is given
 > ## Set project
 >> * `gcloud config set project [projectName]`
 >> * `gcloud config set project example-project-name`
+
+ # [Git & GitHub](git.md)
 
 > # Jira
 > ## Filters
@@ -1327,7 +565,7 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> * -> File -> Automatic Replies
 >> ```txt
 >> Dear Sender,
->> 
+>>
 >> #v1:
 >> I am currently Out of Office till {dddd, YYYY MMMM dd}.
 >> If you need immediate assistance please contact:
@@ -1336,7 +574,7 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> #v2:
 >> I'm currently on leave till {dddd, YYYY MMMM dd}.
 >> For things related to {Team} please forward mail to our DL: {TeamDL}
->> 
+>>
 >> {Mail Signature}
 > # Auto Responder
 >> ```txt
@@ -1368,7 +606,7 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> Request data -> Code  (Icon: </>)
 >> Variable -> {{VariableName}}
 >> Disable redirect -> Request -> Settings -> Automatically fallow redirects -> OFF
->> Authorization: 
+>> Authorization:
 >> ```json
 >> {
 >>     "apiKey": {
@@ -1386,7 +624,7 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> * `'SCRAM-SHA-256$4096:0CymgkTIKyl9DtgU0qMfvg==$fDjCCSLRyLXS9YnzULn5JH86q8k0jmOHsemk914xc+s=:LvC1p4O53uPny/9OTk/k6ZWfNVCPT7suwbu92Wqf60Q=';`
 > ## Add PostgreSQL to Environment Variables
 >> * `Windows` + `R` -> sysdm.cpl
->> * System Properties 
+>> * System Properties
 >>   *    Advanced -> Environment Variables
 >> * Environment Variables
 >>   * System variables -> Path -> Edit.. -> New -> `C:\Program Files\PostgreSQL\14\bin`
@@ -1435,10 +673,10 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> | 2^62 (ulong)  | 18_446,744_073_709_551_615
 
 > # Regex
->> | Function                  | Regex                | Replace   
+>> | Function                  | Regex                | Replace
 >> | ------------------------- | -------------------- | -----------------------------------------------
 >> | Trim line                 | `\s+$` (TODO: Exclude line brakes)
->> | Remove log time stamp     | `\[[^\s]*\]`         
+>> | Remove log time stamp     | `\[[^\s]*\]`
 >> | Remove crossed md lines   | `>> [*] [0-9]{2}:[0-9]{2} ~~[^~]*~~\|> ### ~~[^~]*~~`
 >> | Readonly to property      | `private readonly string (\w+) = "(\w+)";` | `private string $1 { get => "$2"; }`
 >> | Not Whitespace            | `[^\s]`
@@ -1500,7 +738,7 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> };
 
 > # Software
->> | Purpose                   | Software             | Link   
+>> | Purpose                   | Software             | Link
 >> | ------------------------- | -------------------- | -----------------------------------------------
 >> | Angular / TypeScript builder   | [Node.js](https://nodejs.org/en/download/current)
 >> | Azure local emulation          | Azurite + [Azure Storage Explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer)
@@ -1556,35 +794,35 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> ```sql
 >> DECLARE @Counter_A INT;
 >> DECLARE @Counter_B INT;
->> 
+>>
 >> SELECT @Counter_A = COUNT (*) FROM [Table_A];
 >> SELECT @Counter_B = COUNT (*) FROM [Table_B];
->> 
+>>
 >> CREATE TABLE [#CountersTable]
 >> (
 >> 	[A] INT,
 >> 	[B] INT,
 >> );
->> 
+>>
 >> INSERT [#CountersTable] VALUES (@Counter_A, @Counter_B);
->> 
+>>
 >> SELECT * FROM [#CountersTable];
 > ## DELETE
 >> ```sql
->> DELETE 
+>> DELETE
 >>   FROM users
 >>   WHERE user_name NOT IN ('domain\egid1', 'domain\egid2', 'domain\egid3')
 >> ;
 > ## SELECT INTO, CREATE TABLE (Temp)
 >> ```sql
 >> DROP TABLE IF EXISTS [#TempTable]
->> 
+>>
 >> -- a. SELECT INTO
 >> SELECT *
 >>   INTO [#TempTable]
 >>   FROM [Knowledge].[dbo].[Skills]
 >> ;
->> 
+>>
 >> -- b. CREATE TABLE
 >> CREATE TABLE [#TempTable]
 >> (
@@ -1592,22 +830,22 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> 	[Boolean] BIT NOT NULL,
 >> 	[Date] DATE NOT NULL,
 >> );
->> 
+>>
 >> SELECT *
 >> 	FROM [#TempTable]
 >> ;
 > ## DECLARE, SET, PRINT  (Variables)
 >> ```sql
 >> DECLARE @DefaultDate DATE = '2000-01-01'
->> 
+>>
 >> DECLARE @Name NVARCHAR(255), @Id INT
 >> SET @Name= 'Test-Name'
->> 
+>>
 >> DECLARE @NewRecordIndex INT;
->> SELECT @NewRecordIndex = MAX([Id]) 
+>> SELECT @NewRecordIndex = MAX([Id])
 >>   FROM [TableA]
 >> ;
->> 
+>>
 >> PRINT @NewRecordIndex
 > ## DECLARE CURSOR (Update Cursor)
 >> ```sql
@@ -1618,10 +856,10 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >>   OPEN UpdateCursor
 >>     FETCH NEXT FROM UpdateCursor INTO @NewRecordData
 >>     WHILE @@FETCH_STATUS = 0 BEGIN
->>     
+>>
 >>       INSERT INTO [TableA] ([RecordData])
 >>       VALUES (@NewRecordData);
->>       
+>>
 >>       FETCH NEXT FROM UpdateCursor INTO @NewRecordData
 >>     END
 >>   CLOSE UpdateCursor
@@ -1629,12 +867,12 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> ;
 > ## EXEC (Execute Procedure)
 >> ```sql
->> DECLARE 
+>> DECLARE
 >>     @Arg_1 INT           = 1,
 >>     @Arg_2 BIGINT        = 900000000000,
 >>     @Arg_3 NVARCHAR(255) = 'Test-Arg',
 >>     @Arg_4 DATE          = '2000-01-01';
->> 
+>>
 >> EXEC PREFIX_PROCEDURE_NAME @Argument_1 = @Arg_1, @Argument_2 = @Arg_2,
 >>                            @Argument_3 = @Arg_3,  @Argument_4 = @Arg_4
 >>;
@@ -1652,7 +890,7 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> END ELSE BEGIN
 >>   {SQL Code}
 >> END
->> 
+>>
 >> IF @Boolean = 1
 >>   {SQL Code}
 >> ELSE
@@ -1663,13 +901,13 @@ c-r` -> Allow recursive removal when a leading directory name is given
 > ## INSERT
 >> ```sql
 >> DECLARE @Name NVARCHAR(50) = 'ExampleName'
->> 
+>>
 >> SET IDENTITY_INSERT [TableA] ON
->> 
->> INSERT [TableA] ([Id], [Name]) 
+>>
+>> INSERT [TableA] ([Id], [Name])
 >>   VALUES (1, @Name)
 >> ;
->> 
+>>
 >> SET IDENTITY_INSERT [TableA] OFF
 > ## JOIN
 >> ```sql
@@ -1696,7 +934,7 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> ```sql
 >> ORDER BY [Id] ASC <=> ORDER BY [Id]
 >> ORDER BY [Id] DESC
->> 
+>>
 >> ORDER BY IIF([NullableColumn] IS NULL, 1, 0), [NullableColumn] - Nulls at the end
 > ## RAISERROR
 >> ```sql
@@ -1711,10 +949,10 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> TRUNCATE TABLE [TableA]
 > ## OTHER QUERIES
 >> ```sql
->> SELECT 
->>     ORDER_ID, 
->>     TO_CHAR(ORDER_CREATION_DATE, 'YYYY-MM-DD') AS CREATION_DATE, 
->>     TO_CHAR(ORDER_REQUESTED_DISPATCH_DATE, 'YYYY-MM-DD') AS REQUESTED_DISPATCH_DATE, 
+>> SELECT
+>>     ORDER_ID,
+>>     TO_CHAR(ORDER_CREATION_DATE, 'YYYY-MM-DD') AS CREATION_DATE,
+>>     TO_CHAR(ORDER_REQUESTED_DISPATCH_DATE, 'YYYY-MM-DD') AS REQUESTED_DISPATCH_DATE,
 >>     ORDER_SOURCE, ORDER_CURRENT_STATUS, ROUND((ORDER_REQUESTED_DISPATCH_DATE - ORDER_CREATION_DATE)/365, 2) AS DATE_DIF_IN_DAYS
 >> FROM ORDERS_VW
 >> WHERE ORDER_REQUESTED_DISPATCH_DATE IS NOT NULL
@@ -1762,7 +1000,7 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >> * UiRobot: %LocalAppdata%\UiPath\UiPath.Agent.exe
 >>   * -> Orchestrator Settings
 >> * User (RobotName): corp\ksledz
->> * Add Robot to Environments 
+>> * Add Robot to Environments
 >> * Management -> Robots -> Environments
 >> * Machine: [MachineId]
 >> * OrchestratorUrl: [URL]
@@ -1795,13 +1033,13 @@ c-r` -> Allow recursive removal when a leading directory name is given
 > ## Default projects directory
 >> `%UserProfile%\source\repos`
 > ## Free licenses
->> * Apache 2.0, 
->> * MIT 
+>> * Apache 2.0,
+>> * MIT
 >> * BSD 3
 > ## Line Indicator 80 / 120 characters line
 >> * [Editor Guidelines](https://marketplace.visualstudio.com/items?itemName=PaulHarrington.EditorGuidelines)
 > ## [MSDN](https://my.visualstudio.com/Downloads/Featured)
-> ## Open File 
+> ## Open File
 >> `ctrl` + `t`
 > ## Wrap Lines
 >> `ctrl` + `e`, `ctrl` + `w`
@@ -1882,11 +1120,11 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >>     * ProgramFilesDir (x86)
 >>     * ProgramFilesDir
 > ## Change Outlook download default folder
->> * -> `win` + `r` 
+>> * -> `win` + `r`
 >> * -> regedit
 >> * -> HKEY_CURRENT_USER\SOFTWARE\Microsoft\Office\[16.0]\Outlook\Options
->>   * -Add   -> 	String Value 
->>   * -Name  -> 	DefaultPath 
+>>   * -Add   -> 	String Value
+>>   * -Name  -> 	DefaultPath
 >>   * -Modify-> 	`%UserProfile%\Downloads`
 > ## Change screenshots default directory
 >> * -> `%UserProfile%\Pictures\Screenshots`
@@ -1898,25 +1136,25 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >>   * -> `Task Scheduler Library\Microsoft\Windows\Application Experience`
 >>   * -> Microsoft Compatibility Appraiser -> Disable
 > ## Environment Variables
->> * a. Windows 
+>> * a. Windows
 >>   * -> Edit the system environment variables
 >>   * -> Environment Variables
 >>     * -> System variables -> Path -> Edit.. -> New -> [PasteYourPath]
 >> * b. `win` + `r`-> sysdm.cpl
->> * System Properties 
+>> * System Properties
 >>   * -> Advanced -> Environment Variables
 >>     * -> System variables -> Path -> Edit.. -> New -> [PasteYourPath]
 >> * **REQUIRES RESTART OF TERMINAL!!!**
 > ## Not found edgegdi.dll
->> * -> copy: 
->>   * `%SystemRoot%\SysWOW64\`    
+>> * -> copy:
+>>   * `%SystemRoot%\SysWOW64\`
 >>   * `EdgeManager.dll`
 >> * -> paste to:
 >>   * `%SystemRoot%\System32\`
 >>   * -> rename pasted EdgeManager.dll to: Edgegdi.dll
 > ## Init config
 >> ### Classic File Explorer context menu
->>> * -> `win` + `r` -> regedit 
+>>> * -> `win` + `r` -> regedit
 >>>   * -> HKEY_CURRENT_USER\SOFTWARE\CLASSES\CLSID
 >>>   * -> New -> Key -> {86ca1aa0-34aa-4e8b-a509-50c905bae2a2}
 >>>   * -> New -> Key -> InprocServer32 (left default value blank)
@@ -1926,20 +1164,20 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >>> * -> System -> Clipboard
 >>> * -> Clipboard history: ON
 >> ### File Explorer
->>> * -> File Explorer -> Menu (...) -> Options 
+>>> * -> File Explorer -> Menu (...) -> Options
 >>>   * -> Open File Explorer to: -> "{User}"
 >>>   * -> Privacy
 >>>     * -> Show recently used files   -> UNCHECK
 >>>     * -> Show frequently used files -> UNCHECK
 >>>     * -> Show recommended section   -> UNCHECK
->>>   * -> View 
+>>>   * -> View
 >>>     * -> Advanced settings:
 >>>       * -> Hidden files and folders -> Show hidden files, folders and drivers -> CHECK
 >>>       * -> Hide extensions for known file types -> UNCHECK
 >> ### Windows Languages
 >>> * -> Windows right click -> Setting
 >>>   * -> Time & language
->>>   * -> Language & region 
+>>>   * -> Language & region
 >>>   * -> Options
 >>>   * -> Keyboards -> Add a keyboard
 >>>     * -> Polish (Programmers)
@@ -2073,13 +1311,13 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >>> | tracert    | Traces and displays all paths required to reach an internet host
 >>> | winchat    | simple chat program for Windows networks
 >>> | winipcfg   | Displays IP configuration
-> ## Snip & Sketch 
+> ## Snip & Sketch
 >> * Cache folder
 >>   * `%LocalAppData%/Packages/Microsoft.ScreenSketch_8wekyb3d8bbwe/TempState`
 >> * [Clipboard autosave](#enable-clipboard-history)
 
 
-> # TODO BlossomCookbook 
+> # TODO BlossomCookbook
 >> * Settings polish, english languages
 >> * Easy recipe searching
 >> * Responsive application
@@ -2336,7 +1574,7 @@ Obliczyć powierzchnię monitorów
     15.6 + 24
     15.6 + 24 +32
     15.6 + 27 +32
-Write function wich create file with each ascii sign 
+Write function wich create file with each ascii sign
     https://www.asciitable.com/
 ----------------------------------------------
 
@@ -2355,7 +1593,6 @@ Kubernetes
     kubectl -n frontend-conquerors port-forward svc/pg-sqlproxy-gcloud-sqlproxy 5433:5432
     Auth error:
       gcloud auth application-default login
-    
 230s AppService limitation
   https://learn.microsoft.com/en-us/troubleshoot/azure/app-service/web-apps-performance-faqs#why-does-my-request-time-out-after-230-seconds
 
@@ -2369,7 +1606,7 @@ Add PickingGroups API
 var r = OracleParametersToString(storeProcedureParameters);
 public static string OracleParametersToString(OracleParameter oracleParameters)
 {
-  var stringParameters = oracleParameters.Select(oracleParameter 
+  var stringParameters = oracleParameters.Select(oracleParameter
   {
     if (!string.IsNullOrWhiteSpace(oracleParameter?.Value?.ToString()))
     {
@@ -2426,16 +1663,16 @@ this.notificationService.showError(
       );
 
 
-if (!await userPrivilegeService.DoesUserHaveCreateShowroomOrderPrivilege(cancellationToken compartment userEmail))               
+if (!await userPrivilegeService.DoesUserHaveCreateShowroomOrderPrivilege(cancellationToken compartment userEmail))
             {
                 return OperationResult<byte>.Failure($"User '{userEmail}' does not have permissions to generate order report");
             }
-      
-if (!await userPrivilegeService.DoesUserHaveCreateReturnOrderPrivilege(cancellationToken compartment userEmail))               
+
+if (!await userPrivilegeService.DoesUserHaveCreateReturnOrderPrivilege(cancellationToken compartment userEmail))
             {
                 return OperationResult<byte>.Failure($"User '{userEmail}' does not have permissions to generate order report");
             }
-      
+
       DoesUserHaveCreateReturnOrderPrivilege(cancellationToken
                                         compartmentParameter
                                         userEmail);
@@ -2451,9 +1688,9 @@ Request 1password:
     -> Set your master password. It should be strong cause it provides access to whole your and team vault. It should have at least 16 characters, capital letter, small letter, digit, special character
   •  Login in to https://ikea.1password.com
   •  Ask Scrum Master/Tech Lead to add you in to group "Group Name"
-    
+
 Adding/Removing members:
-  -> Login in to https://ikea.1password.com -> Groups (right panel) 
+  -> Login in to https://ikea.1password.com -> Groups (right panel)
   -> Select proper group e.g. "Group Name" -> Mange
   -> search user to add / uncheck user to remove
 Turn on two-factor authentication for your 1Password account
@@ -2464,7 +1701,7 @@ https://support.1password.com/two-factor-authentication
 https://cucumber.io/docs/guides/10-minute-tutorial/
 
 PowerShell -> mvn archetype:generate (>> = shift + enter)
->> "-DarchetypeGroupId=io.cucumber" 
+>> "-DarchetypeGroupId=io.cucumber"
 >> "-DarchetypeArtifactId=cucumber-archetype"
 >> "-DarchetypeVersion=7.0.0"
 >> "-DgroupId=hellocucumber"
@@ -2473,7 +1710,7 @@ PowerShell -> mvn archetype:generate (>> = shift + enter)
 >> "-Dversion=1.0.0-SNAPSHOT"
 >> "-DinteractiveMode=false"
 
-PowerShell -> 
+PowerShell ->
     mvn archetype:generate  "-DarchetypeGroupId=io.cucumber" "-DarchetypeArtifactId=cucumber-archetype" "-DarchetypeVersion=7.0.0" "-DgroupId=hellocucumber" "-DartifactId=hellocucumber" "-Dpackage=hellocucumber" "-Dversion=1.0.0-SNAPSHOT" "-DinteractiveMode=false"
 
 Install Maven
@@ -2486,7 +1723,7 @@ Install Gradle
         add path to "Environment Variables" (MAY REQUIRE SYSTEM RESTART)
     verify Gradle installation -> PowerShell -> gradle -v
 
-PowerShell -> cd hellocucumber -> 
+PowerShell -> cd hellocucumber ->
   gradle init
     Found a Maven build. Generate a Gradle build from this? -> yes
         Select build script DSL:
@@ -2502,7 +1739,6 @@ build.gradle -> open file -> add sections ->
 			extendsFrom testImplementation
 		}
 	}
-	
 	task cucumber() {
 		dependsOn assemble, testClasses
 		doLast {

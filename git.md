@@ -3,14 +3,36 @@
 >> * -> GitLab -> User -> Preferences -> SSH Keys -> Add new key
 >>   * Usage type: Authentication & Signing
 >>   * Expiration date: null
+> ## Config
+>>`.gitconfig`
+>> ```ini
+>> [user]
+>> 	name = {{ UserName }}
+>> 	email = {{ UserEmail }}
+>> [core]
+>> 	editor = code --wait
+>> [sequence]
+>> 	editor = code --wait --reuse-window
+>> [pull]
+>> 	rebase = true
+>> [safe]
+>> 	directory = {{ UserProfile }}/source/repos/{{ Repository }}
+>> [filter "lfs"]
+>> 	clean = git-lfs clean -- %f
+>> 	smudge = git-lfs smudge -- %f
+>> 	process = git-lfs filter-process
+>> 	required = true
 > ## Pull changes with temp stash
 >> `git stash save "TEMP_$(Get-Date -Format "yyyy-MM-dd_HH:mm")"; git pull; git stash apply`
 > ## Checkout / crate branch
->> `git checkout -b us/0000000000`
+>> `git checkout -b "us/0000000000"`
+>> `git checkout -b "us/0000000000" "origin/main" --no-tracking`
 > ## Crate commit
 >> `git commit -m "Commit Name"`
 > ## Push to new branch
->> `git push --set-upstream origin (git branch --show-current);`
+>> `git push --set-upstream origin (git branch --show-current)`
+> ## Pull force
+>> `git reset --hard "origin/$(git branch --show-current)"`
 > ## (GitHub) Go to create new PR (Pull Request) page
 >> `start "$((git remote get-url origin).Replace('.git', ''))/pull/new/$(git branch --show-current)"`
 > ## (GitHub) Go to PR (Pull Request) page
@@ -28,14 +50,12 @@
 >> * `git checkout [branchName]`
 > ## Change commit date
 >> ### CommitDate / AuthorDate / GIT_COMMITTER_DATE
->>> * `git commit --amend --date "Mon Mar 1 01:00:00 2020 +0000" --no-edit`
+>>> * `git commit --amend --no-edit --date "Mon Mar 1 01:00:00 2020 +0000"`
 >> ### Check commit history:
 >>> * `git log --pretty=fuller`
 > ## Change git editor
->> * `git config --global core.editor {editorName/editorPath}`
->> * `git config --global core.editor     "'C:\Program Files\Microsoft VS Code\Code.exe' -n -w"`
->> * `git config --global sequence.editor "'C:\Program Files\Microsoft VS Code\Code.exe' -n -w"`
->> * `-c "core.editor=code --wait --reuse-window" -c "sequence.editor=code --wait --reuse-window"`
+>> * `git config --global core.editor     "code --wait --reuse-window"`
+>> * `git config --global sequence.editor "code --wait --reuse-window"`
 > ## Check commits history
 >> * `git log`
 > ## Check git version
@@ -102,14 +122,14 @@
 >> 2. `git lfs install`
 >> 3. `git lfs track "example\path\to\e.g.\large.dll"`
 > ## Moving repository
->> 1.
+>> A.
 >>> 1. `git fetch -p`
 >>> 2. `git fetch --tags`
 >>> 3. `git remote rm origin`
 >>> 4. `git remote add origin [urlOfNewRepository]`
 >>> 5. `git push --set-upstream origin [originBranchName] --force` -> (for each branch to migrate )
 >>> 6. `git push --tags`
->> 2.
+>> B.
 >>> 1. -> Create temp directory
 >>> 2. -> Open terminal in created director
 >>> 3. -> Clone repository to move
@@ -132,9 +152,15 @@
 > ## Open online method documentation
 >> * `git help [commandName]`
 > ## Override local changes
->> * `git reset --hard origin/development`
+>> * `git reset --hard origin/main`
+> ## Push
+>> * `git push`
+>> * `git push --force-with-lease`
+>> * `git push --force`
 > ## Push to new origin branch
 >> * `git push --set-upstream origin [newOnlineBranchName]`
+> ## Push to different origin branch
+>> * `git push origin HEAD:main --force-with-lease`
 > ## Push to repository (existing one)
 >> * `git push -u origin [branchName]`
 > ## Rebase commits
@@ -154,6 +180,8 @@ c-r` -> Allow recursive removal when a leading directory name is given
 >>    1. `java -jar bfg-1.14.0.jar --delete-files oraociei12.dll`
 >>    1. `git reflog expire --expire=now --all`
 >>    1. `git gc --prune=now --aggressive`
+> ## Remove git current branch origin connection
+>> * `git branch --unset-upstream`
 > ## Remove git repository
 >> * `Remove-Item -Force -Recurse –path ./.git`
 > ## Rename commit

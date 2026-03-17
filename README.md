@@ -145,6 +145,10 @@ Error: unable to connect to Podman. failed to create sshClient: connection to ba
 >>> * **ERROR:** Image chainGuard/minio:latest Interrupt 123.1s Error response from daemon: i/o timeout.
 >>> * **Solution:**
 >>> ``` VPN connection might block connection / check internet
+> # Install WSL
+>> `wsl --install`
+>> WSL > `sudo apt update`
+>> WSL > `sudo apt upgrade`
 
 > # Edge
 > ## Config
@@ -536,6 +540,7 @@ Excel Function - Distinct Values
 >> * [Rethink mandatory password changes](https://www.ftc.gov/policy/advocacy-research/tech-at-ftc/2016/03/time-rethink-mandatory-password-changes)
 >> * [Most popular technologies 2022](https://survey.stackoverflow.co/2022/#most-popular-technologies-language-prof)
 >> * [Interesting Lecture IT (Project Phoenix)](https://lubimyczytac.pl/ksiazka/308849/projekt-feniks-powiesc-o-it-modelu-devops-i-o-tym-jak-pomoc-firmie-w-odniesieniu-sukcesu)
+>> * [VisualStudio](https://visualstudio.microsoft.com/pl/downloads/)
 
 > # Notepad++
 >> #### [.md (Mark Down) - Basic Syntax](https://www.markdownguide.org/basic-syntax)
@@ -1078,6 +1083,8 @@ Excel Function - Distinct Values
 >> | Open Markdown Preview to the Window | `ctrl` + `shift` + `v`
 > ## Add VS Code as default git editor
 >> `git config --global core.editor "code --wait"`
+> ## Open Folder 
+>> `code "$(Get-Location)"`
 
 
 > # Windows

@@ -1081,11 +1081,14 @@ Excel Function - Distinct Values
 >> | Open commands list     | `ctrl` + `shift` + `p`
 >> | Open Markdown Preview to the Side   | `ctrl` + `K`, `V`
 >> | Open Markdown Preview to the Window | `ctrl` + `shift` + `v`
-> ## Add VS Code as default git editor
->> `git config --global core.editor "code --wait"`
+> ## [Add VS Code as default git editor](git.md#Change-git-editor)
 > ## Open Folder 
 >> `code "$(Get-Location)"`
-
+> ## Fix GitLens Interactive Rebase
+>> ```powershell
+>> Remove-Item "$env:AppData\Code\Cache" -Force -Recurse
+>> Remove-Item "$env:AppData\Code\GPUCache" -Force -Recurse
+>> Remove-Item "$env:AppData\Code\Service Worker" -Force -Recurse
 
 > # Windows
 > ## Windows Explorer Environment Variables
